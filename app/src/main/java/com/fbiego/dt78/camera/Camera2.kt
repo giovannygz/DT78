@@ -253,22 +253,22 @@ class Camera2(private val activity: Activity, private val textureView: AutoFitTe
 //    }
 
     private val surfaceTextureListener = object : TextureView.SurfaceTextureListener {
-        override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture?, width: Int, height: Int) {
-            configureTransform(width, height)
-
-        }
-
-        override fun onSurfaceTextureUpdated(surface: SurfaceTexture?) {
-
-        }
-
-        override fun onSurfaceTextureDestroyed(surface: SurfaceTexture?): Boolean {
-            return true
-        }
-
-        override fun onSurfaceTextureAvailable(surface: SurfaceTexture?, width: Int, height: Int) {
+        override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
+            TODO("Not yet implemented")
             openCamera(width, height)
+        }
 
+        override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {
+            TODO("Not yet implemented")
+            configureTransform(width, height)
+        }
+
+        override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
+            TODO("Not yet implemented")
+        }
+
+        override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
+            TODO("Not yet implemented")
         }
     }
 
@@ -506,7 +506,7 @@ class Camera2(private val activity: Activity, private val textureView: AutoFitTe
 
             val surfaceTexture = textureView.surfaceTexture
 // We configure the size of default buffer to be the size of camera preview we want.
-            surfaceTexture.setDefaultBufferSize(previewSize!!.width, previewSize!!.height)
+            surfaceTexture?.setDefaultBufferSize(previewSize!!.width, previewSize!!.height)
 
 // This is the output Surface we need to start preview.
             if (surface == null)
@@ -720,7 +720,7 @@ we set flash after the preview request is processed to ensure flash fires only d
 
     private fun captureBitmap() {
         if (textureView.isAvailable) {
-            onBitmapReady(textureView.bitmap)
+            textureView.bitmap?.let { onBitmapReady(it) }
         }
     }
 

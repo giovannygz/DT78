@@ -118,10 +118,12 @@ class BackupRestoreActivity : AppCompatActivity() {
         val alarmManager = context.getSystemService(ALARM_SERVICE) as AlarmManager
         if (state){
             intent.putExtra("id", id)
-            val pending = PendingIntent.getBroadcast(context.applicationContext, 54300 + id, intent, PendingIntent.FLAG_CANCEL_CURRENT)
+            val pending = PendingIntent.getBroadcast(context.applicationContext, 54300 + id, intent,
+                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE)
             alarmManager.setRepeating(AlarmManager.RTC, cal.timeInMillis, AlarmManager.INTERVAL_DAY, pending)
         } else {
-            val pendingIntent = PendingIntent.getBroadcast(context.applicationContext, 54300 + id, intent, PendingIntent.FLAG_NO_CREATE)
+            val pendingIntent = PendingIntent.getBroadcast(context.applicationContext, 54300 + id, intent,
+                PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE)
             if (pendingIntent != null) {
                 alarmManager.cancel(pendingIntent)
             }

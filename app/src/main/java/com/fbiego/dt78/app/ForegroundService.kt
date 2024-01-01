@@ -25,6 +25,7 @@
 
 package com.fbiego.dt78.app
 
+import android.Manifest
 import android.annotation.TargetApi
 import android.app.*
 import android.app.admin.DevicePolicyManager
@@ -32,12 +33,14 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.content.*
+import android.content.pm.PackageManager
 import android.media.Ringtone
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.*
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -787,6 +790,9 @@ class ForegroundService : Service(), MessageListener, PhonecallListener, DataLis
         @RequiresApi(Build.VERSION_CODES.P)
         override fun onDeviceConnected(device: BluetoothDevice) {
             super.onDeviceConnected(device)
+
+            if(checkPermission(Manifest.permission.BLUETOOTH_CONNECT)) return
+
             Timber.d("onDeviceConnected ${device.name}")
             notify(getString(R.string.connected)+" ${device.name}", false, -1, SERVICE_ID)
             val dbHandler = MyDBHandler(context, null, null, 1)
@@ -805,6 +811,20 @@ class ForegroundService : Service(), MessageListener, PhonecallListener, DataLis
 
         override fun onDeviceReady(device: BluetoothDevice) {
             super.onDeviceReady(device)
+            if (ActivityCompat.checkSelfPermission(
+                    this@ForegroundService,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return
+            }
             Timber.d("FG - Device ready ${device.name}")
             connected = true
 
@@ -841,6 +861,7 @@ class ForegroundService : Service(), MessageListener, PhonecallListener, DataLis
         override fun onDeviceConnecting(device: BluetoothDevice) {
             super.onDeviceConnecting(device)
             connected = false
+            if(checkPermission(Manifest.permission.BLUETOOTH_CONNECT)) return
             Timber.d("Connecting to ${if (device.name.isNullOrEmpty()) "device" else device.name}")
             notify(getString(R.string.connecting)+" ${if (device.name.isNullOrEmpty()) "device" else device.name}", false, -10, SERVICE_ID)
             //val calendar = Calendar.getInstance(Locale.getDefault())
@@ -854,6 +875,8 @@ class ForegroundService : Service(), MessageListener, PhonecallListener, DataLis
         override fun onDeviceDisconnecting(device: BluetoothDevice) {
             super.onDeviceDisconnecting(device)
             connected = false
+            if(checkPermission(Manifest.permission.BLUETOOTH_CONNECT)) return
+
             Timber.d("Disconnecting from ${device.name}")
             notify(getString(R.string.disconnecting)+" ${device.name}", false, -10, SERVICE_ID)
             //val calendar = Calendar.getInstance(Locale.getDefault())
@@ -872,6 +895,7 @@ class ForegroundService : Service(), MessageListener, PhonecallListener, DataLis
         override fun onDeviceDisconnected(device: BluetoothDevice) {
             super.onDeviceDisconnected(device)
             connected = false
+            if(checkPermission(Manifest.permission.BLUETOOTH_CONNECT)) return
             Timber.d("Disconnected from ${device.name}")
             notify(getString(R.string.disconnected)+" ${device.name}", notify!=0, -10, SERVICE_ID)
             if (notify == 2 ){
@@ -893,6 +917,7 @@ class ForegroundService : Service(), MessageListener, PhonecallListener, DataLis
         override fun onLinkLossOccurred(device: BluetoothDevice) {
             super.onLinkLossOccurred(device)
             connected = false
+            if(checkPermission(Manifest.permission.BLUETOOTH_CONNECT)) return
             Timber.d("Lost link to ${device.name}")
             notify(getString(R.string.loss_link)+" ${device.name}", notify!=0, -10, SERVICE_ID)
             if (notify == 2 ){
@@ -911,6 +936,7 @@ class ForegroundService : Service(), MessageListener, PhonecallListener, DataLis
             //Timber.e("Error: $errorCode, Device:${device.name}, Message: $message")
             //notify("Error:$errorCode on ${device.name}", notify!=0, -10, SERVICE_ID)
             connected = false
+            if(checkPermission(Manifest.permission.BLUETOOTH_CONNECT)) return
             //val calendar = Calendar.getInstance(Locale.getDefault())
             //Timber.e("Device ${device.name} error occurred at ${calendar.time}")
             val dbHandler = MyDBHandler(context, null, null, 1)
@@ -935,10 +961,10 @@ class ForegroundService : Service(), MessageListener, PhonecallListener, DataLis
                 var app: Int
                 val notificationIcon = intent.getIntExtra(NotificationListener.EXTRA_ICON, 0)
                 val notificationId = intent.getIntExtra(NotificationListener.EXTRA_NOTIFICATION_ID_INT, 0)
-                val notificationPackage = intent.getStringExtra(NotificationListener.EXTRA_PACKAGE)
-                val notificationAppName = intent.getStringExtra(NotificationListener.EXTRA_APP_NAME)
-                val notificationTitle = intent.getStringExtra(NotificationListener.EXTRA_TITLE)
-                val notificationBody = intent.getStringExtra(NotificationListener.EXTRA_BODY)
+                val notificationPackage = intent.getStringExtra(NotificationListener.EXTRA_PACKAGE).toString()
+                val notificationAppName = intent.getStringExtra(NotificationListener.EXTRA_APP_NAME).toString()
+                val notificationTitle = intent.getStringExtra(NotificationListener.EXTRA_TITLE).toString()
+                val notificationBody = intent.getStringExtra(NotificationListener.EXTRA_BODY).toString()
                 val notificationTimestamp = intent.getLongExtra(NotificationListener.EXTRA_TIMESTAMP_LONG, 0)
                 val notificationDismissed = intent.getBooleanExtra(NotificationListener.EXTRA_NOTIFICATION_DISMISSED, true)
                 val notificationEnabled = intent.getBooleanExtra(NotificationListener.EXTRA_SHOW, true)
@@ -986,23 +1012,25 @@ class ForegroundService : Service(), MessageListener, PhonecallListener, DataLis
                         if (titleN) {
                             if (appN){
                                 val rem = if (bodyN){
-                                    notificationTitle.length + notificationBody.length + 2
+                                    (notificationBody?.let { notificationTitle?.length?.plus(it.length) })?.plus(2)
                                 } else {
-                                    notificationTitle.length
+                                    notificationTitle?.length
                                 }
-                                if (buffer.length < line && rem < 125 - line && Watch(dt78).line25){
-                                    for (x in 0 until line-buffer.length){
-                                        buffer.append(" ")
+                                if (rem != null) {
+                                    if (buffer.length < line && rem < 125 - line && Watch(dt78).line25){
+                                        for (x in 0 until line-buffer.length){
+                                            buffer.append(" ")
+                                        }
+                                    } else {
+                                        buffer.append(": ")
                                     }
-                                } else {
-                                    buffer.append(": ")
                                 }
                             }
                             buffer.append(notificationTitle)
                         }
                         if (bodyN) {
                             if (!appN && titleN){
-                                val rem = notificationBody.length
+                                val rem = notificationBody?.length
                                 if (buffer.length < line && rem < 125 - line && Watch(dt78).line25){
                                     for (x in 0 until line -buffer.length){
                                         buffer.append(" ")
@@ -1021,14 +1049,14 @@ class ForegroundService : Service(), MessageListener, PhonecallListener, DataLis
                         }
 
                         if (notificationPackage == "com.google.android.googlequicksearchbox") {
-                            val msg = if (notificationTitle.indexOf("°") in 1..5){
-                                val deg = (notificationTitle.substring(0, notificationTitle.indexOf("°"))).toIntOrNull()
-                                var city = notificationTitle.substring(notificationTitle.indexOf("°")+1, notificationTitle.length)
-                                if (city.contains(" in ")){
-                                    city = city.substring(city.indexOf(" in ")+4, city.length)
+                            val msg = if (notificationTitle?.indexOf("°") in 1..5){
+                                val deg = (notificationTitle?.substring(0, notificationTitle?.indexOf("°")))?.toIntOrNull()
+                                var city = notificationTitle?.substring(notificationTitle?.indexOf("°")+1, notificationTitle?.length)
+                                if (city?.contains(" in ")){
+                                    city = city?.substring(city?.indexOf(" in ")+4, city?.length)
                                 }
-                                if (city.length < 25 && notificationBody.length <= 25){
-                                    for (x in 0 until 25 - city.length){
+                                if (city?.length < 25 && notificationBody?.length <= 25){
+                                    for (x in 0 until 25 - city?.length){
                                         city = "$city "
                                     }
                                 } else {
@@ -1067,7 +1095,7 @@ class ForegroundService : Service(), MessageListener, PhonecallListener, DataLis
                 } else {
                     Timber.d("Previous notification detected: body=$notBody app=$notAppName or nullPackage=$notificationPackage")
                     if (notificationIcon == 20){
-                        if (notificationBody.isNotEmpty() && bleManager != null){
+                        if (notificationBody?.isNotEmpty() && bleManager != null){
                             sendNotification(notificationBody, icon, true)
                         }
                     }
@@ -1873,5 +1901,16 @@ class ForegroundService : Service(), MessageListener, PhonecallListener, DataLis
         }
     }
 
+    private fun checkPermission(permission: String): Boolean {
+        if (ActivityCompat.checkSelfPermission(
+                this@ForegroundService,
+                permission
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            Toast.makeText(this@ForegroundService, "No permission", Toast.LENGTH_SHORT).show()
+            return true
+        }
+        return false
+    }
 
 }

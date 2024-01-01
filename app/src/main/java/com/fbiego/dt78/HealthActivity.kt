@@ -221,31 +221,32 @@ class HealthActivity : AppCompatActivity(), DataListener {
     }
 
     private val scaleUp : Animator.AnimatorListener = object : Animator.AnimatorListener{
-        override fun onAnimationStart(p0: Animator?) {
-
+        override fun onAnimationStart(animation: Animator) {
+            TODO("Not yet implemented")
         }
 
-        override fun onAnimationEnd(p0: Animator?) {
+        override fun onAnimationEnd(animation: Animator) {
             heart_beat.animate().scaleXBy(-0.2f).scaleYBy(-0.2f).setDuration(rate)
                 .setListener(scaleDown)
         }
 
-        override fun onAnimationCancel(p0: Animator?) {
-
+        override fun onAnimationCancel(animation: Animator) {
+            TODO("Not yet implemented")
         }
 
-        override fun onAnimationRepeat(p0: Animator?) {
-
+        override fun onAnimationRepeat(animation: Animator) {
+            TODO("Not yet implemented")
         }
 
     }
 
     private val scaleDown : Animator.AnimatorListener = object : Animator.AnimatorListener{
-        override fun onAnimationStart(p0: Animator?) {
+
+        override fun onAnimationStart(animation: Animator) {
 
         }
 
-        override fun onAnimationEnd(p0: Animator?) {
+        override fun onAnimationEnd(animation: Animator) {
             if (measuring) {
                 heart_beat.animate().scaleXBy(0.2f).scaleYBy(0.2f).setDuration(rate)
                     .setListener(scaleUp)
@@ -254,12 +255,12 @@ class HealthActivity : AppCompatActivity(), DataListener {
             }
         }
 
-        override fun onAnimationCancel(p0: Animator?) {
-
+        override fun onAnimationCancel(animation: Animator) {
+            TODO("Not yet implemented")
         }
 
-        override fun onAnimationRepeat(p0: Animator?) {
-
+        override fun onAnimationRepeat(animation: Animator) {
+            TODO("Not yet implemented")
         }
 
     }

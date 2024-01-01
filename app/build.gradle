@@ -44,12 +44,12 @@ android {
 
         }
     }
-    compileSdkVersion 29
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.fbiego.dt78"
         minSdkVersion 21
-        targetSdkVersion 29
+        targetSdkVersion 33
         versionCode 38
         versionName "3.6"
         multiDexEnabled true
@@ -79,7 +79,6 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-    buildToolsVersion '29.0.2'
 
     lintOptions {
         checkReleaseBuilds false
@@ -87,6 +86,7 @@ android {
         // but continue the build even when errors are found:
         abortOnError false
     }
+    namespace 'com.fbiego.dt78'
 }
 
 dependencies {
